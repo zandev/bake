@@ -8,10 +8,16 @@
 ##
 ###
 
+expect_value(){
+  [ -s "$1" ] && return 1
+  [[ "$1" =~ ^\ *-- ]] && return 1
+  return 0
+}
+
 # Retrieve a file localy or remotly a copy it into the specified directory
-# $1: The file to retrieve
-# $2: The target directory
-# $3: The protocol to use, default to http
+# $1: the file to retrieve
+# $2: the target directory
+# $3: the protocol to use, default to http
 retrieve_file(){
   [ -d "$2" ] || mkdir -pv "$2"
   case "${3:-http}" in
@@ -20,20 +26,65 @@ retrieve_file(){
   esac
 }
 
+# Verify if a dependency is satisfied, or retrieve it from a local or remote location.
+# -n|--name         : the name of the library
+# -l|--location     : the location of the library
+# -w|--with-callback: a callback to handle the dependency
+# -v|--version      : the version of the library
 require_lib(){
-  echo "$# args"
-  local name="$1"
-  local protocol="$(echo $2 | egrep -o '^[a-zA-Z]+://' | sed 's@://$@@')"
-  local location="$2"
-  local version="$3"
+
+  show_help(){
+    echo $@
+    exit 0
+  }
+  
+  for var in name location callback version; do
+    local $var=''
+  done
+
+  while [ $# -gt 1 ]; do
+    case $1 in
+      -n|--name)
+        expect_value $2 || show_help "$1 expect a valid value"
+        name="$2"
+        shift 2
+        ;;
+      -l|--location)
+        expect_value $2 || show_help "$1 expect a valid value"
+        location="$2"
+        shift 2
+        ;;
+      -w|--with)
+        expect_value $2 || show_help "$1 expect a valid value"
+        callback="$2"
+        shift 2
+        ;;
+      -v|--version)
+        expect_value $2 || show_help "$1 expect a valid value"
+        version="$2"
+        shift 2
+        ;;
+      --)
+        shift 2
+        ;;
+      -*|*)
+        show_help "Unknow parameter $1"
+        ;;
+    esac
+  done
+
+  local protocol="$(echo $location | egrep -o '^[a-zA-Z]+://' | sed 's@://$@@')"
 
   echo name is $name
   echo protocol is $protocol
   echo location is $location
   echo version is $version
+  echo callback is $callback
 
   if [ -f "$BAKE_PKG_PATH/$name/$version/$name.sh" ]; then
     echo "Found $name in $BAKE_PKG_PATH/$name/$version"
+  elif [ ! -z "$callback" ]; then
+    $callback
   else
     echo "No $name found in $BAKE_PKG_PATH/$name/$version"
     retrieve_file "$location" "$BAKE_PKG_PATH/$name/$version" "${protocol:-file}"

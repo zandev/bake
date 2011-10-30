@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 set -u
 
@@ -32,8 +33,11 @@ set -u
 
 BAKE_PKG_PATH="$stub_dir/lib"
 
-require_lib testlib "$data_dir/testlib.sh" '1.0.0'
-require_lib shflags "http://shflags.googlecode.com/svn/trunk/source/1.0/src/shflags" '1.0.4pre'
+# require_lib 'n:l:w:v:'
+# require_lib -n(name) -l(location) -w(with callback) -v(version)
+require_lib -n testlib  -l "$data_dir/testlib.sh" -v '1.0.0'
+require_lib -n shflags  -l "http://shflags.googlecode.com/svn/trunk/source/1.0/src/shflags" -v '1.0.4pre'
+require_lib -n otherlib -w  otherlib_callback #Handle dep manualy. Should return 0
 
 ###
 ## Clean
