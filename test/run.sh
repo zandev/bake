@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+#set -e
 set -u
 
 ###
@@ -28,6 +28,15 @@ set -u
 
 . "$script_dir/../src/bake.sh"
 
+###
+## stubs
+
+  otherlib_callback(){
+    echo callback called!
+  }
+
+##
+###
 
 # api wish
 
